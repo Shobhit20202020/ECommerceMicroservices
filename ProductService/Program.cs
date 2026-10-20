@@ -31,6 +31,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
+using ProductService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,9 +39,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ProductDbContext>(options => options.UseSqlServer(
     builder.Configuration.GetConnectionString("ProductConnection")));
+builder.Services.AddScoped<
+    IProductService,
+    global::ProductService.Services.ProductService>();
 
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
