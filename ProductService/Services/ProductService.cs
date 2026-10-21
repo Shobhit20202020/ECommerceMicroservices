@@ -4,6 +4,7 @@ using ProductService.Data;
 using ProductService.DTOs;
 using ProductService.Models;
 using Microsoft.Extensions.Logging;
+using ProductService.Common;
 
 namespace ProductService.Services
 {
@@ -19,17 +20,51 @@ namespace ProductService.Services
             _logger = logger;
         }
 
-        public async Task<List<Product>> GetAllAsync()
+        public async Task<PagedResult<Product>> GetAllAsync(
+            string? search=null,
+             int pageNumber = 1,
+             int pageSize = 10)
         {
             _logger.LogInformation(
                 "Fetching all products from the database.");
             try
             {
+                IQueryable<Product> query = _context.Products
+                    .AsNoTracking();
 
+                // 1 Apply search filtration.
 
-                return await _context.Products
-                    .AsNoTracking()
+                if(!string.IsNullOrWhiteSpace(search))
+                {
+                    search = search.Trim();
+                    query = query.Where(p => p.Name.Contains(search));
+                }
+                // count all the matching products before pagination
+                var totalCount = await query.CountAsync();
+
+                // calculate total pages
+
+                var totalPages = (int)Math.Ceiling(
+            (double)totalCount / pageSize);
+
+                // 4. Retrieve only the requested page
+                var products = await query
+                    .OrderBy(p => p.Id)
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
                     .ToListAsync();
+
+
+                // 5. Return products with pagination metadata
+                return new PagedResult<Product>
+                {
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages,
+                    Items = products
+                };
+
             }
             catch(Exception ex)
             {
