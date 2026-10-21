@@ -4,6 +4,7 @@ using ProductService.Data;
 using ProductService.Models;
 using ProductService.DTOs;
 using ProductService.Services;
+using ProductService.Common;
 
 namespace ProductService.Controllers
 {
@@ -19,9 +20,19 @@ namespace ProductService.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Product>>> GetProducts()
+        public async Task<ActionResult<List<Product>>> GetProducts(
+            [FromQuery] string? search=null,
+             [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10     )
         {
-            var products = await _productService.GetAllAsync();
+            if (pageNumber < 1 || pageSize < 1 || pageSize > 100)
+            {
+                return BadRequest(
+                    "pageNumber must be at least 1, and pageSize must be between 1 and 100.");
+            }
+            
+            var products = await _productService.GetAllAsync(
+                search,pageNumber,pageSize);
                
 
             return Ok(products);
