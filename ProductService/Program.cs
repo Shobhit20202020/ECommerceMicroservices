@@ -1,36 +1,10 @@
-//var builder = WebApplication.CreateBuilder(args);
-
-//// Add services to the container.
-//builder.Services.AddControllersWithViews();
-
-//var app = builder.Build();
-
-//// Configure the HTTP request pipeline.
-//if (!app.Environment.IsDevelopment())
-//{
-//    app.UseExceptionHandler("/Home/Error");
-//    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//    app.UseHsts();
-//}
-
-//app.UseHttpsRedirection();
-//app.UseRouting();
-
-//app.UseAuthorization();
-
-//app.MapStaticAssets();
-
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Home}/{action=Index}/{id?}")
-//    .WithStaticAssets();
 
 
-//app.Run();
-
-
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using ProductService.Data;
+using ProductService.Middleware;
 using ProductService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -44,8 +18,21 @@ builder.Services.AddScoped<
     global::ProductService.Services.ProductService>();
 
 builder.Services.AddProblemDetails();
+//using Asp.Versioning;
+
+builder.Services
+    .AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+        options.ApiVersionReader =
+            new UrlSegmentApiVersionReader();
+    })
+    .AddMvc();
 
 var app = builder.Build();
+//app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseExceptionHandler();
 
@@ -67,6 +54,9 @@ app.UseAuthorization();
 
 // Map attribute-routed API controllers.
 app.MapControllers();
-
+app.MapGet("/test-exception", () =>
+{
+    throw new Exception("Test exception for middleware");
+});
 app.Run();
 
