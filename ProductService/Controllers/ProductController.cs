@@ -9,7 +9,7 @@ using ProductService.Common;
 namespace ProductService.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/product")]
     public class ProductController : ControllerBase
     {
 
@@ -58,9 +58,16 @@ namespace ProductService.Controllers
 
 
             var product=await _productService.CreateAsync(dto);
-            
 
-            return Ok(product);
+            return CreatedAtAction(
+      nameof(GetProduct),
+      new
+      {
+          version = "1.0",
+          id = product.Id
+      },
+      product);
+            //return Ok(product);
 
             //return CreatedAtAction(
             //    nameof(GetProductById),
@@ -75,9 +82,18 @@ namespace ProductService.Controllers
             var updated = await _productService.UpdateAsync(id, dto);
 
             if (!updated)
-                return NotFound();
+            {
+                return NotFound(new
+                {
+                    message = $"Product with ID {id} was not found."
 
-            return NoContent();
+                });
+            }
+
+            return Ok(new
+            {
+                message="Product updated successfully."
+            });
         }
 
 
@@ -97,7 +113,11 @@ namespace ProductService.Controllers
         return NoContent();
     }
 
-       
+
+
+
+
+
 
 
         //private static readonly List<Product> Products = new()
@@ -148,4 +168,4 @@ namespace ProductService.Controllers
     }
 
 
-    }
+}
