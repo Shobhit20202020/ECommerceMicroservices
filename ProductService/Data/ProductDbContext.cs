@@ -13,6 +13,7 @@ public class ProductDbContext : DbContext
     }
 
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
