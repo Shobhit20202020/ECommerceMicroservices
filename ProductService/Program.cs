@@ -1,11 +1,15 @@
-
-
 using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using ProductService.Data;
 using ProductService.Middleware;
 using ProductService.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using ProductService.Authentication;
+using Microsoft.AspNetCore.Identity;
+using ProductService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +35,40 @@ builder.Services
     })
     .AddMvc();
 
+// jwt token code 
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+
+var key = jwtSettings["Key"]
+    ?? throw new InvalidOperationException("JWT Key is missing.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+
+            ValidateLifetime = true,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(key))
+        };
+    });
+
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddScoped<JwtTokenService>();
+
 var app = builder.Build();
 //app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -49,14 +87,11 @@ else
 app.UseHttpsRedirection();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Map attribute-routed API controllers.
 app.MapControllers();
-app.MapGet("/test-exception", () =>
-{
-    throw new Exception("Test exception for middleware");
-});
+
 app.Run();
 

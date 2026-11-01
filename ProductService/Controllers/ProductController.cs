@@ -5,6 +5,8 @@ using ProductService.Models;
 using ProductService.DTOs;
 using ProductService.Services;
 using ProductService.Common;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ProductService.Controllers
 {
@@ -18,7 +20,7 @@ namespace ProductService.Controllers
         {
             _productService = productService;
         }
-
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<Product>>> GetProducts(
             [FromQuery] string? search=null,
@@ -97,9 +99,10 @@ namespace ProductService.Controllers
         }
 
 
-    
 
-   
+
+
+    [Authorize(Roles="Admin")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
